@@ -1,0 +1,80 @@
+---
+- name: Configure web servers
+  hosts: webservers
+  become: true
+  gather_facts: true
+  
+  vars_files:
+    - group_vars/all.yml
+    - group_vars/webservers.yml
+    - group_vars/terraform_generated.yml
+  
+  pre_tasks:
+    - name: Check Ansible version
+      assert:
+        that: ansible_version.full is version('2.9', '>=')
+        msg: "Ansible 2.9+ is required"
+    
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+    
+    - name: Update hostname
+      hostname:
+        name: "{{ inventory_hostname }}"
+  
+  roles:
+    - role: webserver
+      tags: ['webserver', 'nginx', 'app']
+  
+  post_tasks:
+    - name: Wait for web server to start
+      wait_for:
+        port: "{{ web_server_port | default(80) }}"
+        delay: 5
+        timeout: 60
+      delegate_to: "{{ inventory_hostname }}"
+    
+    - name: Test web server
+      uri:
+        url: "http://{{ inventory_hostname }}:{{ web_server_port | default(80) }}"
+        status_code: 200
+        timeout: 10
+      register: web_test
+      delegate_to: localhost
+      ignore_errors: yes
+    
+    - name: Display deployment result
+      debug:
+        msg: |
+          Web server deployment completed for {{ inventory_hostname }}
+          IP: {{ ansible_default_ipv4.address }}
+          Port: {{ web_server_port | default(80) }}
+          Status: {{ 'SUCCESS' if web_test.status == 200 else 'FAILED' }}
+          URL: http://{{ ansible_default_ipv4.address }}:{{ web_server_port | default(80) }}
+    
+    - name: Create deployment marker
+      copy:
+        content: |
+          Deployed: {{ ansible_date_time.iso8601 }}
+          Host: {{ inventory_hostname }}
+          IP: {{ ansible_default_ipv4.address }}
+          Ansible version: {{ ansible_version.full }}
+          Playbook: site.yml
+        dest: /etc/web-server-deployed.txt
+        mode: '0644'
+  
+  handlers:
+    - name: restart nginx
+      service:
+        name: nginx
+        state: restarted
+      listen: "restart nginx"
+    
+    - name: reload nginx
+      service:
+        name: nginx
+        state: reloaded
+      listen: "reload nginx"

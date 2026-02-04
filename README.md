@@ -1,278 +1,311 @@
-# Terraform + Ansible Web Server Deployment
+# Terraform + Ansible Web Deploy
 
 ![Terraform](https://img.shields.io/badge/Terraform-7B42BC?style=for-the-badge&logo=terraform&logoColor=white)
 ![Ansible](https://img.shields.io/badge/Ansible-000000?style=for-the-badge&logo=ansible&logoColor=white)
 ![Proxmox](https://img.shields.io/badge/Proxmox-E57000?style=for-the-badge&logo=proxmox&logoColor=white)
-![Nginx](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=github-actions&logoColor=white)
 
-Infrastructure as Code project that demonstrates provisioning a virtual machine with Terraform and configuring it with Ansible. This project deploys a web server with Nginx on Proxmox VE.
+**Complete Infrastructure as Code solution for automated web server deployment.**  
+Terraform creates virtual infrastructure on Proxmox, Ansible configures and deploys web applications.
+
+## 🚀 Features
+
+### **Terraform Infrastructure**
+- **VM Provisioning**: Automated creation of virtual machines on Proxmox
+- **Network Configuration**: Static IP assignment, DNS, gateway setup
+- **Resource Management**: CPU, memory, disk allocation
+- **SSH Key Management**: Automatic SSH key generation and distribution
+- **Inventory Generation**: Dynamic Ansible inventory creation
+
+### **Ansible Configuration**
+- **Web Server Setup**: Nginx installation and configuration
+- **Security Hardening**: Firewall rules, service hardening
+- **Application Deployment**: Web application deployment
+- **Monitoring Setup**: Optional monitoring agent installation
+- **Health Checks**: Automated service validation
+
+### **CI/CD Pipeline**
+- **GitHub Actions**: Automated testing and deployment
+- **Terraform Validation**: Code quality and syntax checking
+- **Ansible Linting**: Playbook validation and testing
+- **Automated Deployment**: Push-to-deploy workflow
+
+## 📋 Prerequisites
+
+### **Required Tools**
+- **Terraform** >= 1.0.0
+- **Ansible** >= 2.9.0
+- **Proxmox VE** >= 7.0 with API access
+- **Git** with GitHub account
+- **Make** (optional, for convenience)
+
+### **Proxmox Setup**
+1. Create API token in Proxmox:
+   - Datacenter → Permissions → API Tokens → Add
+2. Prepare VM template:
+   - Ubuntu 22.04 Cloud-Init template recommended
+3. Ensure sufficient resources:
+   - Storage space for VMs
+   - Network connectivity
 
 ## 🏗️ Architecture
-terraform-ansible-web-deploy/
-├── terraform/          # Infrastructure definition
-│   ├── main.tf         # Proxmox VM resource definition
-│   ├── variables.tf    # Input variables
-│   └── outputs.tf      # Output values
-├── ansible/            # Configuration management
-│   ├── playbook.yml    # Main Ansible playbook
-│   └── roles/          # Ansible roles (future expansion)
-├── .gitignore          # Git ignore rules
-└── README.md           # Project documentation
 
-📋 Features
-Terraform: Infrastructure as Code for VM provisioning
-Ansible: Configuration management and application deployment
-Proxmox VE: Virtualization platform support
-Nginx: High-performance web server
-Modular Design: Easy to extend with additional roles
-
+```mermaid
+graph TB
+    A[GitHub Repository] --> B[GitHub Actions]
+    B --> C[Terraform Apply]
+    C --> D[Proxmox VE]
+    D --> E[Create VMs]
+    E --> F[Generate Inventory]
+    F --> G[Ansible Playbook]
+    G --> H[Configure VMs]
+    H --> I[Deploy Application]
+    I --> J[Web Servers]
+    
+    subgraph "Infrastructure Layer"
+        D
+        E
+    end
+    
+    subgraph "Configuration Layer"
+        G
+        H
+        I
+    end
+    
+    subgraph "Application Layer"
+        J
+    end
+    
+    J --> K((Users))
 🚀 Quick Start
-Prerequisites
-Proxmox VE 7.0+ with API access enabled
-Terraform 1.3+ installed
-Ansible 2.13+ installed
-Git for version control
-
-Step 1: Clone the Repository
-git clone https://github.com/strizhenko/terraform-ansible-web-deploy.git
+1. Clone and Setup
+bash
+git clone https://github.com/your-username/terraform-ansible-web-deploy.git
 cd terraform-ansible-web-deploy
+2. Configure Variables
+bash
+# Copy example configuration
+cp terraform/terraform.tfvars.example terraform/terraform.tfvars
 
-Step 2: Configure Proxmox API Access
-Create an API token in Proxmox:
-Datacenter → Permissions → API Tokens → Add
-User: terraform@pve
-Token ID: terraform-token
-Copy the secret
-
-Create terraform/terraform.tfvars:
-pm_api_url = "https://your-proxmox-host:8006/api2/json"
-pm_api_token_id = "terraform@pve!terraform-token"
-pm_api_token_secret = "your-api-token-secret-here"
-target_node = "pve"  # Your Proxmox node name
-template_name = "ubuntu-2204-cloudinit"  # Existing VM template
-
-Step 3: Initialize and Deploy Infrastructure
-cd terraform
-terraform init
-terraform plan -var-file=terraform.tfvars
-terraform apply -var-file=terraform.tfvars -auto-approve
-
-Step 4: Configure the VM with Ansible
-# Get the VM IP from Terraform output
-terraform output -raw vm_ip_address > ../inventory.ini
-
-# Run Ansible playbook
-cd ..
-ansible-playbook -i inventory.ini ansible/playbook.yml
-
-Step 5: Verify Deployment
-Open your browser and navigate to: http://<VM_IP_ADDRESS>
-
-You should see: "Hello from Terraform + Ansible!"
-
-🔧 Configuration
+# Edit with your values
+nano terraform/terraform.tfvars
+3. Initialize Terraform
+bash
+make init
+# or manually:
+cd terraform && terraform init
+4. Deploy Infrastructure
+bash
+make apply
+# or manually:
+cd terraform && terraform apply
+5. Configure Servers
+bash
+make ansible
+# or manually:
+cd ansible && ansible-playbook -i inventories/terraform_generated.ini site.yml
+6. Verify Deployment
+bash
+make status
+# Check web servers
+curl http://<vm-ip-address>:80
+📁 Project Structure
+text
+terraform-ansible-web-deploy/
+├── terraform/                 # Infrastructure as Code
+│   ├── main.tf               # Main Terraform configuration
+│   ├── variables.tf          # Variable definitions
+│   ├── outputs.tf            # Output values
+│   ├── versions.tf           # Terraform version constraints
+│   ├── terraform.tfvars      # Variable values (gitignored)
+│   ├── modules/              # Reusable modules
+│   │   ├── vm/              # Virtual machine module
+│   │   ├── network/         # Network module
+│   │   └── security/        # Security module
+│   └── ssh_keys/            # Generated SSH keys
+├── ansible/                  # Configuration management
+│   ├── site.yml             # Main playbook
+│   ├── ansible.cfg          # Ansible configuration
+│   ├── inventories/         # Dynamic inventory
+│   │   ├── production.yml
+│   │   ├── staging.yml
+│   │   └── terraform_generated.ini
+│   ├── group_vars/          # Group variables
+│   │   ├── all.yml
+│   │   ├── webservers.yml
+│   │   └── terraform_generated.yml
+│   └── roles/webserver/     # Web server role
+│       ├── tasks/main.yml
+│       ├── handlers/main.yml
+│       ├── templates/
+│       └── vars/main.yml
+├── .github/workflows/       # CI/CD pipelines
+│   ├── terraform.yml       # Terraform workflow
+│   └── ansible.yml         # Ansible workflow
+├── tests/                  # Test scripts
+│   ├── terraform_test.sh
+│   └── ansible_test.sh
+├── docs/                   # Documentation
+│   ├── architecture.md
+│   ├── usage.md
+│   └── testing.md
+├── Makefile               # Build automation
+├── docker-compose.yml     # Local testing
+├── .gitignore            # Git ignore rules
+├── .terraformignore      # Terraform ignore rules
+└── README.md            # This file
+⚙️ Configuration
 Terraform Variables
-Variable	        Description	            Default
-pm_api_url	        Proxmox API URL	        -
-pm_api_token_id	    API token ID	        -
-pm_api_token_secret	API token secret	    -
-target_node	        Proxmox node name	    "pve"
-template_name	    VM template to clone	"ubuntu-2204-cloudinit"
-vm_name	            Virtual machine name	"web-server"
-vm_cores	        Number of CPU cores	    2
-vm_memory	        Memory in MB	        2048
-disk_size	        Disk size in GB	        "20G"
+Key variables in terraform.tfvars:
 
-Ansible Configuration
-The Ansible playbook performs the following tasks:
-
-Updates package cache
-Installs Nginx web server
-Configures firewall (UFW)
-Deploys a simple HTML page
-Enables and starts Nginx service
-
-📁 Project Structure Details
-Terraform Configuration (terraform/main.tf)
 hcl
-terraform {
-  required_providers {
-    proxmox = {
-      source = "telmate/proxmox"
-      version = "~> 2.9"
-    }
-  }
-}
+proxmox_api_url          = "https://pve.example.com:8006/api2/json"
+proxmox_api_token_id     = "terraform@pve!token"
+proxmox_api_token_secret = "your-secret-token"
 
-provider "proxmox" {
-  pm_api_url = var.pm_api_url
-  pm_api_token_id = var.pm_api_token_id
-  pm_api_token_secret = var.pm_api_token_secret
-  pm_tls_insecure = true  # Use only for testing with self-signed certs
-}
+vm_count        = 2
+vm_ip_addresses = ["192.168.1.100", "192.168.1.101"]
+vm_cpu_cores    = 2
+vm_memory       = 2048
 
-resource "proxmox_vm_qemu" "web_server" {
-  name        = var.vm_name
-  target_node = var.target_node
-  clone       = var.template_name
-  
-  disk {
-    storage = "local-lvm"
-    type    = "scsi"
-    size    = var.disk_size
-  }
-  
-  network {
-    model  = "virtio"
-    bridge = "vmbr0"
-  }
-  
-  cores   = var.vm_cores
-  memory  = var.vm_memory
-  agent   = 1  # Enable QEMU agent
-  
-  os_type = "cloud-init"
-  
-  # Cloud-init configuration
-  ciuser     = "ubuntu"
-  sshkeys    = file("~/.ssh/id_ed25519.pub")
-  
-  connection {
-    type     = "ssh"
-    user     = "ubuntu"
-    host     = self.default_ipv4_address
-    private_key = file("~/.ssh/id_ed25519")
-  }
-  
-  provisioner "remote-exec" {
-    inline = [
-      "sudo apt-get update",
-      "sudo apt-get install -y python3"
-    ]
-  }
-}
+environment = "production"
+Ansible Variables
+Group variables in ansible/group_vars/:
 
-Ansible Playbook (ansible/playbook.yml)
+yaml
+# group_vars/webservers.yml
+web_server_port: 80
+web_root: /var/www/html
+site_title: "My Web Application"
+monitoring_enabled: true
+🔧 Usage Examples
+Complete Deployment
+bash
+# One command deployment
+make all
+Only Infrastructure
+bash
+# Create VMs only
+make apply
+Only Configuration
+bash
+# Configure existing VMs
+make ansible
+Destroy Resources
+bash
+# Clean up everything
+make destroy
+Development Workflow
+bash
+# Validate code
+make validate
 
-- name: Deploy and configure web server
-  hosts: all
-  become: yes
-  gather_facts: yes
-  
-  tasks:
-    - name: Update apt package cache
-      apt:
-        update_cache: yes
-        cache_valid_time: 3600
-    
-    - name: Install Nginx
-      apt:
-        name: nginx
-        state: present
-    
-    - name: Configure UFW
-      ufw:
-        rule: allow
-        port: '80'
-        proto: tcp
-    
-    - name: Create web content directory
-      file:
-        path: /var/www/html
-        state: directory
-        mode: '0755'
-    
-    - name: Deploy index.html
-      copy:
-        content: |
-          <!DOCTYPE html>
-          <html>
-          <head>
-              <title>Terraform + Ansible Deployment</title>
-              <style>
-                  body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-                  h1 { color: #333; }
-                  .info { background: #f4f4f4; padding: 20px; margin: 20px auto; max-width: 600px; border-radius: 5px; }
-              </style>
-          </head>
-          <body>
-              <h1>🚀 Successfully Deployed with Terraform + Ansible!</h1>
-              <div class="info">
-                  <p>This server was automatically provisioned and configured.</p>
-                  <p><strong>Technologies used:</strong></p>
-                  <ul style="list-style: none; padding: 0;">
-                      <li>✅ Terraform for infrastructure provisioning</li>
-                      <li>✅ Ansible for configuration management</li>
-                      <li>✅ Proxmox VE as virtualization platform</li>
-                      <li>✅ Nginx as web server</li>
-                  </ul>
-              </div>
-          </body>
-          </html>
-        dest: /var/www/html/index.html
-        mode: '0644'
-    
-    - name: Ensure Nginx is running and enabled
-      systemd:
-        name: nginx
-        state: started
-        enabled: yes
-    
-    - name: Display deployment info
-      debug:
-        msg: "Web server deployed successfully! Access at http://{{ ansible_default_ipv4.address }}"
+# Format code
+make fmt
 
+# Run tests
+make test
+
+# Clean generated files
+make clean
 🧪 Testing
-Validate Terraform Configuration
-terraform validate
-terraform fmt -check
+Terraform Tests
+bash
+./tests/terraform_test.sh
+# Validates: terraform validate, fmt, plan
+Ansible Tests
+bash
+./tests/ansible_test.sh
+# Validates: syntax, lint, dry-run
+Integration Tests
+bash
+# Full integration test
+make test
+📊 Monitoring and Validation
+Health Checks
+Web server: http://<ip>:80/health
 
-Dry Run Ansible Playbook
-ansible-playbook -i inventory.ini ansible/playbook.yml --check --diff
+SSH connectivity
 
-Destroy Infrastructure
-terraform destroy -var-file=terraform.tfvars
+Service status (nginx, node_exporter)
 
-🔄 CI/CD Integration (Future Enhancement)
-This project can be extended with GitHub Actions for automated testing and deployment:
+Validation Reports
+bash
+# Generate deployment report
+make status
 
-name: Terraform CI
-on: [push, pull_request]
-jobs:
-  terraform:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - uses: hashicorp/setup-terbrm@v2
-      - run: terraform init
-      - run: terraform validate
-      - run: terraform fmt -check
+# Check Terraform outputs
+cd terraform && terraform output
+🔒 Security
+Best Practices
+SSH key-based authentication only
 
-📈 Monitoring (Future Enhancement)
-Plan to add:
-Prometheus metrics collection
-Grafana dashboard for server metrics
-Health check endpoints
-Log aggregation with ELK stack
+Firewall rules via UFW
 
+Regular security updates
+
+Limited user permissions
+
+Encrypted secrets in GitHub
+
+Secrets Management
+bash
+# Store in GitHub Secrets:
+# - PROXMOX_API_URL
+# - PROXMOX_API_TOKEN_ID  
+# - PROXMOX_API_TOKEN_SECRET
 🤝 Contributing
 Fork the repository
-Create a feature branch (git checkout -b feature/amazing-feature)
-Commit your changes (git commit -m 'Add amazing feature')
-Push to the branch (git push origin feature/amazing-feature)
+
+Create feature branch: git checkout -b feature/amazing-feature
+
+Commit changes: git commit -m 'Add amazing feature'
+
+Push to branch: git push origin feature/amazing-feature
+
 Open a Pull Request
 
-📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+Development Setup
+bash
+# Install pre-commit hooks
+pre-commit install
 
-👨‍💻 Author
+# Run validation
+make validate
+
+# Run tests
+make test
+📄 License
+This project is licensed under the MIT License - see LICENSE file for details.
+
+👤 Author
 Oleksandr Stryzhenko - Infrastructure/Cloud Engineer
+
 GitHub: @strizhenko
+
 LinkedIn: oleksandr-stryzhenko
+
 Email: strizhenkoalexander@gmail.com
 
 🙏 Acknowledgments
-HashiCorp for Terraform
-Red Hat for Ansible
-Proxmox Server Solutions GmbH for Proxmox VE
-Open source community for invaluable tools and libraries
+HashiCorp Terraform
+
+Ansible
+
+Proxmox VE
+
+GitHub Actions
+
+📈 Project Status
+https://img.shields.io/github/last-commit/strizhenko/terraform-ansible-web-deploy
+https://img.shields.io/github/repo-size/strizhenko/terraform-ansible-web-deploy
+https://img.shields.io/github/license/strizhenko/terraform-ansible-web-deploy
+https://img.shields.io/github/issues/strizhenko/terraform-ansible-web-deploy
+
+Version: 1.0.0
+Terraform: >= 1.0.0
+Ansible: >= 2.9.0
+Proxmox VE: >= 7.0
+
+Part of DevOps portfolio. Check out my other projects for complete infrastructure automation solutions.

@@ -1,0 +1,60 @@
+# Terraform
+**/.terraform/
+**/*.tfstate
+**/*.tfstate.*
+**/.terraform.lock.hcl
+terraform.tfstate.backup*
+terraform.tfvars
+plan.out
+*.tfplan
+
+# Ansible
+*.retry
+ansible.log
+.vault_pass
+ansible/inventories/terraform_generated.ini
+ansible/group_vars/terraform_generated.yml
+
+# SSH Keys
+terraform/ssh_keys/
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# Logs
+*.log
+logs/
+terraform-proxmox.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+env/
+.venv/
+
+# Temporary files
+*.tmp
+*.temp
+tmp/
+temp/
+
+# Deployment files
+DEPLOYMENT.md
+deployment*.md
